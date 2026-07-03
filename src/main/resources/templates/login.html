@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SaaS Exam Portal - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen text-white">
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700">
+        <h2 class="text-3xl font-bold mb-2 text-center text-emerald-400">SecureExam SaaS</h2>
+        <p class="text-slate-400 text-sm text-center mb-6">Enterprise Multi-Tenant Examination Engine</p>
+        
+        <div th:if="${param.error}" class="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded-lg text-sm mb-4 text-center">
+            Invalid credentials provided.
+        </div>
+
+        <form th:action="@{/login}" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Username</label>
+                <input type="text" name="username" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 transition text-white">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Password</label>
+                <input type="password" name="password" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:border-emerald-500 transition text-white">
+            </div>
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 transition text-slate-950 font-bold py-3 rounded-lg shadow-lg">
+                Authenticate Session
+            </button>
+        </form>
+        <div class="mt-6 text-center text-xs text-slate-500">
+            Protected by Automated Browser & AI Proctoring Systems
+        </div>
+    </div>
+</body>
+</html>

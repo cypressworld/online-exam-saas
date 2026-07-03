@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Exam Session</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Stable TensorFlow Core and Light Blazeface Model Component APIs -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@3.21.0/dist/tf-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@3.21.0/dist/tf-converter.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@3.21.0/dist/tf-backend-webgl.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 select-none h-screen overflow-hidden flex flex-col">
+
+    <!-- Header Block -->
+    <header class="bg-slate-900 border-b border-slate-800 px-8 py-4 flex justify-between items-center z-50 shrink-0">
+        <div class="flex items-center space-x-4">
+            <span class="bg-red-500 text-slate-950 font-black px-3 py-1 rounded text-xs animate-pulse">SECURE LOCKDOWN STATUS</span>
+            <h2 class="text-xl font-bold">Standard Technical Assessment</h2>
+        </div>
+        <div class="text-right">
+            <div class="text-xs uppercase tracking-wider text-slate-400">Security Violations</div>
+            <div id="violationCount" class="text-xl font-black text-red-500">0</div>
+        </div>
+    </header>
+
+    <!-- App Main Layout Container -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Question Workspace Canvas Area (Scrollable independently) -->
+        <main class="flex-1 p-8 overflow-y-auto space-y-8" id="examContainer">
+            
+            <!-- Pre-Exam Cover / Initialization Portal Screen Overlay -->
+            <div id="startScreen" class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-3xl mx-auto text-center space-y-6 my-12">
+                <h3 class="text-2xl font-black text-emerald-400">System Verification Complete</h3>
+                <p class="text-slate-400 text-sm max-w-md mx-auto">
+                    Clicking the authorization button below launches full-screen monitoring mode and initializes the system tracking arrays. 
+                </p>
+                <button type="button" onclick="initializeSecureExam()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-4 rounded-xl shadow-xl transition transform hover:scale-105">
+                    Authorize & Launch Exam Environment
+                </button>
+            </div>
+
+            <!-- Core Exam Form Workspace Component -->
+            <form id="examForm" class="space-y-8 max-w-3xl mx-auto hidden">
+                <div th:each="q, iter : ${questions}" class="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative">
+                    <span class="absolute top-4 right-4 text-xs text-slate-600 font-mono" th:text="'Q ID: ' + ${q.id}"></span>
+                    <h3 class="text-lg font-bold mb-4" th:text="${iter.index + 1} + '. ' + ${q.questionText}"></h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-lg border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                            <input type="radio" th:name="'q-' + ${q.id}" value="A" class="accent-emerald-400">
+                            <span th:text="${q.optionA}"></span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-lg border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                            <input type="radio" th:name="'q-' + ${q.id}" value="B" class="accent-emerald-400">
+                            <span th:text="${q.optionB}"></span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-lg border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                            <input type="radio" th:name="'q-' + ${q.id}" value="C" class="accent-emerald-400">
+                            <span th:text="${q.optionC}"></span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-lg border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                            <input type="radio" th:name="'q-' + ${q.id}" value="D" class="accent-emerald-400">
+                            <span th:text="${q.optionD}"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="button" onclick="terminateSecureExam(true)" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-4 rounded-xl shadow-xl transition">
+                    Finalize & Submit Assessment
+                </button>
+            </form>
+        </main>
+
+        <!-- Right Side Proctoring Panel (Stays Fixed / Permanent during scroll actions) -->
+        <aside class="w-80 bg-slate-900 border-l border-slate-800 p-6 flex flex-col space-y-6 shrink-0 h-full overflow-hidden">
+            <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Live Camera Stream Pipeline</h4>
+                <div class="relative aspect-video w-full bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-inner">
+                    <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
+                    <div id="proctorStatus" class="absolute bottom-2 left-2 bg-yellow-500 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                        Awaiting Init
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex-1 overflow-y-auto font-mono text-xs space-y-2">
+                <div class="text-emerald-400 font-bold mb-1">--- SECURITY LOGS ---</div>
+                <div id="logConsole" class="space-y-1 text-slate-500"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- System Script Controls Orchestrator Engine -->
+    <script>
+        let violations = 0;
+        let isExamActive = false;
+        let modelInitialized = false;
+        let blzModel;
+        
+        const logConsole = document.getElementById('logConsole');
+        const violationCountDisplay = document.getElementById('violationCount');
+        const video = document.getElementById('webcam');
+        const proctorStatus = document.getElementById('proctorStatus');
+
+        function appendLog(message, isCritical = false) {
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = isCritical ? 'text-red-400 font-bold' : 'text-slate-400';
+            logEntry.innerText = `[${time}] ${message}`;
+            logConsole.appendChild(logEntry);
+            logConsole.scrollTop = logConsole.scrollHeight;
+        }
+
+        function triggerViolation(reason) {
+            if (!isExamActive) return;
+            violations++;
+            violationCountDisplay.innerText = violations;
+            appendLog(`VIOLATION DETECTED: ${reason}`, true);
+            
+            if (violations >= 5) {
+                alert("Exam automatically terminated due to consecutive security violations.");
+                terminateSecureExam(false);
+            }
+        }
+
+        // Initialize and lock the environment into full-screen mode
+        async function initializeSecureExam() {
+            try {
+                // Request Fullscreen Access
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+                
+                // Toggle Container Visibility Layouts
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('examForm').classList.remove('hidden');
+                
+                isExamActive = true;
+                appendLog("Assessment runtime container unlocked. Fullscreen enabled.");
+                
+                // Initialize Video System Pipe
+                await startWebcamFeed();
+            } catch (err) {
+                alert("Environment Lockdown Fault: Fullscreen and active camera context are mandatory to continue.");
+            }
+        }
+
+        // Cleanly release environment parameters upon exit
+        function terminateSecureExam(completedSuccessfully) {
+            isExamActive = false;
+            
+            // Release Fullscreen Lock
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+            
+            // Turn off camera stream
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            
+            if (completedSuccessfully) {
+                alert("Assessment processing completed successfully!");
+            }
+            window.location.href = "/dashboard";
+        }
+
+        // Monitor Fullscreen Escapes
+        document.addEventListener('fullscreenchange', () => {
+            if (isExamActive && !document.fullscreenElement) {
+                triggerViolation("Exited browser fullscreen containment framework.");
+            }
+        });
+
+        // Window Focus/Blur Detection
+        window.addEventListener('blur', () => {
+            triggerViolation("Lost application window focus (Alt+Tab/External App switch detection).");
+        });
+
+        // Block Context Code Inspections
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "C" || e.key === "J")) || (e.ctrlKey && e.key === "u")) {
+                e.preventDefault();
+                triggerViolation(`Prohibited system manipulation key intercepted: ${e.key}`);
+            }
+        });
+
+        // DOM Anti-Tampering Protection Observer
+        const observer = new MutationObserver(() => {
+            triggerViolation("Client DOM modification attempt intercepted.");
+        });
+        observer.observe(document.getElementById('examContainer'), { attributes: true, childList: true, subtree: true });
+
+        // ==========================================
+        // 👁️ WEB-READY BLAZEFACE SYSTEM LOGIC
+        // ==========================================
+        async function startWebcamFeed() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false });
+                video.srcObject = stream;
+                
+                proctorStatus.innerText = "Loading AI Core";
+                proctorStatus.className = "absolute bottom-2 left-2 bg-blue-500 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded uppercase";
+                
+                // Load the light BlazeFace tracking model
+                blzModel = await blazeface.load();
+                modelInitialized = true;
+                
+                proctorStatus.innerText = "Monitoring Active";
+                proctorStatus.className = "absolute bottom-2 left-2 bg-emerald-500 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded uppercase";
+                appendLog("Computer vision model active. Face positioning analytics verified.");
+                
+                executeFaceTrackingLoop();
+            } catch (err) {
+                appendLog("Hardware framework failure: Active video stream access denied.", true);
+                triggerViolation("Camera hardware stream disconnected.");
+            }
+        }
+
+        async function executeFaceTrackingLoop() {
+            if (!isExamActive || !modelInitialized) return;
+
+            try {
+                const predictions = await blzModel.estimateFaces(video, false);
+
+                if (predictions.length === 0) {
+                    triggerViolation("No human profile found inside camera frame coordinates.");
+                } else if (predictions.length > 1) {
+                    triggerViolation("Multiple physical profiles detected inside monitoring perimeter frame.");
+                } else {
+                    // Stable Blazeface gaze tracking logic
+                    const landmarks = predictions[0].landmarks;
+                    const leftEyeX = landmarks[0][0];
+                    const rightEyeX = landmarks[1][0];
+                    const noseX = landmarks[2][0];
+
+                    // Calculate balance ratios to determine horizontal head turning
+                    const totalWidth = rightEyeX - leftEyeX;
+                    const noseRelativePos = (noseX - leftEyeX) / totalWidth;
+
+                    // If the user shifts their head too far left or right, the tracking ratio breaks symmetry bounds
+                    if (noseRelativePos < 0.25 || noseRelativePos > 0.75) {
+                        triggerViolation("Gaze deviation caught: Head profile turned away from assessment viewport layout.");
+                    }
+                }
+            } catch (e) {
+                // Catches framing drops during layout shifts smoothly
+            }
+
+            // Runs loop diagnostics smoothly at an efficient processing rate
+            setTimeout(() => { requestAnimationFrame(executeFaceTrackingLoop); }, 600);
+        }
+    </script>
+</body>
+</html>

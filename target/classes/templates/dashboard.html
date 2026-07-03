@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>System Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between">
+        <div>
+            <h1 class="text-xl font-black text-emerald-400 tracking-wide mb-8">SECURE EXAM</h1>
+            <nav class="space-y-2">
+                <a href="#" class="block bg-slate-800 text-emerald-400 px-4 py-2.5 rounded-lg font-medium">Dashboard</a>
+                <a href="/exam/start" class="block text-slate-400 hover:bg-slate-800 hover:text-white px-4 py-2.5 rounded-lg transition">Enter Exam Room</a>
+            </nav>
+        </div>
+        <a href="/logout" class="text-sm text-red-400 hover:underline">Terminate System Session</a>
+    </aside>
+
+    <!-- Content Workspace -->
+    <main class="flex-1 p-10">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-bold text-white">Operations Control Center</h2>
+                <p class="text-slate-400">Configure parameters, extract questions, and view global diagnostic reports.</p>
+            </div>
+        </header>
+
+        <!-- Dynamic Feedback Flash Banners -->
+        <div th:if="${message}" class="bg-emerald-500/10 border border-emerald-500 text-emerald-400 p-4 rounded-xl mb-6" th:text="${message}"></div>
+        <div th:if="${error}" class="bg-red-500/10 border border-red-500 text-red-400 p-4 rounded-xl mb-6" th:text="${error}"></div>
+
+        <!-- Metric Grid Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <div class="text-sm text-slate-400 font-medium uppercase tracking-wider">Total Cached Questions</div>
+                <div class="text-4xl font-black mt-2 text-white" th:text="${totalQuestions}">0</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <div class="text-sm text-slate-400 font-medium uppercase tracking-wider">Active Guard Protocols</div>
+                <div class="text-4xl font-black mt-2 text-emerald-400">4 Active</div>
+            </div>
+        </div>
+
+        <!-- Admin Configuration Upload Segment -->
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl max-w-xl">
+            <h3 class="text-lg font-bold mb-2 text-white">Ingest Database via Excel Template</h3>
+            <p class="text-slate-400 text-sm mb-6">Upload an structured standard Excel document (`.xlsx`). Column Layout mapping should match exactly: Question, Option A, Option B, Option C, Option D, Correct Answer.</p>
+            
+            <form th:action="@{/admin/upload}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <input type="file" name="file" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-6 py-2.5 rounded-lg font-bold shadow-lg transition">
+                    Execute Data Extraction
+                </button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
